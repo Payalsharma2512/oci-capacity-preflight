@@ -28,8 +28,8 @@ quotas = quotas_client.list_quotas(tenancy_id, lifecycle_state="ACTIVE").data
 operation = Operation(
     service="compute",
     resource_type="instance",
-    region="us-phoenix-1",
-    availability_domain="AD-1",
+    region="<TARGET_REGION>",
+    availability_domain="<VALID_AD>",
     compartment_id="<COMPARTMENT_OCID>",
     requested_delta={"ocpus": 14},
 )

@@ -151,7 +151,7 @@ function demoResult(kind) {
       service: "compute",
       resource_type: "instance",
       region: "us-ashburn-1",
-      availability_domain: "Example-AD-1",
+      availability_domain: "Example-AD-A",
       compartment_id: "Example Compartment",
       compartment_name: "Production",
       requested_delta: { ocpus: kind === "block" ? 500 : 20 },

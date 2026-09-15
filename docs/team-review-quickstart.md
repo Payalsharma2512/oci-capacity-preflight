@@ -30,7 +30,7 @@ TENANCY_OCID=<tenancy OCID>
 INSTANCE_OCID=<review instance OCID>
 INSTANCE_COMPARTMENT_OCID=<compartment containing the review instance>
 TARGET_COMPARTMENT_OCID=<compartment reviewers will preflight>
-TARGET_REGION=us-phoenix-1
+TARGET_REGION=<target region, for example us-ashburn-1>
 QUOTA_REGION=<tenancy home region, for example us-ashburn-1>
 AVAILABILITY_DOMAIN=<full AD name, for example <VALID_AD>>
 ```
@@ -65,10 +65,10 @@ Allow a few minutes for IAM policy propagation.
 SSH to the dedicated OCI Compute instance and install the app:
 
 ```bash
-sudo dnf install -y git python3 python3-pip
+sudo dnf install -y git python3.11 python3.11-pip
 git clone <PRIVATE_REPO_URL> oci-capacity-preflight
 cd oci-capacity-preflight
-python3 -m pip install --user -e ".[oci,api]"
+python3.11 -m pip install --user -e ".[oci,api]"
 ```
 
 Configure with environment variables:
@@ -103,7 +103,7 @@ set +a
 Run this before starting the UI:
 
 ```bash
-python3 -m cli.main validate-oci \
+python3.11 -m cli.main validate-oci \
   --auth instance_principal \
   --tenancy-id "$OCI_TENANCY_OCID" \
   --region "$TARGET_REGION" \
@@ -199,7 +199,7 @@ The API still returns raw `UNKNOWN` for automation when a check cannot be fully 
 
 `Invalid parameter availabilityDomain`:
 
-- Use the full availability-domain name, not `AD-1`.
+- Use the full availability-domain name, not a short AD alias.
 - Find names with:
 
 ```bash

@@ -81,7 +81,7 @@ python -m cli.main forecast
 PRECHECK: BLOCK
 
 Planned operation:
-Add 14 OCPUs in us-phoenix-1
+Add 14 OCPUs in <TARGET_REGION>
 
 Effective available capacity:
 2 OCPUs
@@ -174,9 +174,9 @@ oci-capacity-preflight forecast
 oci-capacity-preflight preflight \
   --service compute \
   --resource-type instance \
-  --region us-phoenix-1 \
-  --availability-domain AD-1 \
-  --compartment-id <OCID> \
+  --region <TARGET_REGION> \
+  --availability-domain <VALID_AD> \
+  --compartment-id <COMPARTMENT_OCID> \
   --requested-ocpus 14
 ```
 
@@ -189,8 +189,9 @@ oci-capacity-preflight preflight \
   --profile DEFAULT \
   --service compute \
   --resource-type instance \
-  --region us-phoenix-1 \
-  --availability-domain AD-1 \
+  --region <TARGET_REGION> \
+  --quota-region <HOME_REGION> \
+  --availability-domain <VALID_AD> \
   --compartment-id <COMPARTMENT_OCID> \
   --requested-ocpus 14 \
   --limit-name standard-e4-core-count
