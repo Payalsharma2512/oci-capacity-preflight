@@ -16,7 +16,7 @@ class OciLimitsProvider(CapacityProvider):
     def __init__(self, limits_client, tenancy_compartment_id: str, limit_mapping: dict[str, dict[str, str]] | None = None):
         self.client = limits_client
         self.tenancy_compartment_id = tenancy_compartment_id
-        self.limit_mapping = limit_mapping or {"compute": {"ocpus": "standard-e4-core-count"}}
+        self.limit_mapping = limit_mapping or {}
 
     def discover_constraints(self, operation: Operation) -> list[str]:
         definitions = self.client.list_limit_definitions(self.tenancy_compartment_id, service_name=operation.service).data

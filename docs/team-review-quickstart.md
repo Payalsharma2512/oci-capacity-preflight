@@ -12,6 +12,8 @@ Reviewer laptop
 OCI Compute instance, localhost only
   - http://127.0.0.1:8000/
   - POST /preflight
+  - GET /services
+  - GET /capacity
   - GET /health
   |
   | Instance Principal
@@ -82,6 +84,7 @@ Example `.env.team-review`:
 
 ```bash
 OCI_TENANCY_OCID=<TENANCY_OCID>
+OCI_CAPACITY_PREFLIGHT_REGION=us-ashburn-1
 OCI_CAPACITY_PREFLIGHT_QUOTA_REGION=us-ashburn-1
 OCI_CAPACITY_PREFLIGHT_MODE=oci
 OCI_CAPACITY_PREFLIGHT_AUTH=instance_principal
@@ -135,6 +138,8 @@ The same private service hosts:
 ```text
 http://127.0.0.1:8000/
 http://127.0.0.1:8000/health
+http://127.0.0.1:8000/services
+http://127.0.0.1:8000/capacity
 http://127.0.0.1:8000/preflight
 ```
 
@@ -165,19 +170,23 @@ If the instance is private, use OCI Bastion managed SSH port forwarding instead 
 The UI is read-only with respect to OCI. Reviewers can enter:
 
 - service
+- discovered limit/capability
 - region
 - quota/home region
 - availability domain
 - compartment OCID
-- requested OCPUs
+- requested capacity
 
-The UI calls `POST /preflight` and shows:
+The UI calls `GET /capacity` to show the capability matrix and `POST /preflight` only for `FULL_PREFLIGHT` selections. Compute OCPU is the first full preflight adapter. Other services may appear as `MONITOR_ONLY`, `DISCOVERY_ONLY`, or `UNSUPPORTED`.
+
+The result shows:
 
 - `PASS`, `BLOCK`, or a friendly validation error such as `Missing OCI Permission`
 - effective available capacity
 - blocking constraint
 - current usage
 - applicable limit or quota
+- capability level
 - projected usage
 - remediation
 

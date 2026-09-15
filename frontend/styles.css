@@ -28,6 +28,13 @@ input, select { border: 1px solid #b8c2bb; border-radius: 8px; min-height: 42px;
 .notice { display: grid; gap: 4px; margin-top: 16px; padding: 14px; border: 1px solid #d7c39d; border-radius: 8px; background: #fff8e8; }
 .notice strong { color: #4f3d15; }
 .notice span { color: #4c514d; }
+.capabilities { padding: 0; }
+.capabilities h2 { margin: 18px 0 0; font-size: 18px; }
+.badge { display: inline-block; border-radius: 6px; padding: 3px 7px; font-size: 12px; font-weight: 800; background: #e8ece8; color: #293331; }
+.badge.full_preflight { background: #dcece7; color: #185448; }
+.badge.monitor_only { background: #e7ecf3; color: #234765; }
+.badge.discovery_only { background: #fff0cf; color: #704a00; }
+.badge.unsupported { background: #f3dddd; color: #7a2b1d; }
 details { margin-top: 16px; }
 summary { cursor: pointer; font-weight: 800; color: #47524e; }
 table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }

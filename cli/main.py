@@ -4,6 +4,7 @@ import argparse
 import json
 import sys
 
+from src.adapters import ServiceAdapterRegistry
 from src.capacity.engine import CapacityDecisionEngine
 from src.capacity.models import Operation
 from src.forecasting.linear import Observation, linear_growth_forecast
@@ -13,6 +14,8 @@ from src.preflight.demo_data import scenario_passes, scenario_quota_blocks, scen
 from src.preflight.risk import risk_state
 from src.quotas.oci_quota_provider import OciQuotaProvider
 from src.usage.oci_usage_provider import ResourceAvailabilityUsageProvider
+
+adapter_registry = ServiceAdapterRegistry()
 
 
 def build_demo_engine(kind: str):
@@ -30,13 +33,33 @@ def build_real_oci_engine(args):
         args.tenancy_id,
     )
     tenancy_id = args.tenancy_id or clients.tenancy_id
-    limit_mapping = {args.service: {"ocpus": args.limit_name}}
+    limit_mapping = adapter_registry.merged_limit_mapping()
+    if getattr(args, "service", None) == "compute" and getattr(args, "limit_name", None):
+        limit_mapping["compute"] = {"ocpus": args.limit_name}
     usage_provider = ResourceAvailabilityUsageProvider(clients.limits_client, limit_mapping)
     engine = CapacityDecisionEngine([
         OciLimitsProvider(clients.limits_client, tenancy_id, limit_mapping),
         OciQuotaProvider(clients.quotas_client, tenancy_id, usage_provider),
     ])
     return clients, tenancy_id, engine
+
+
+def operation_from_args(args) -> Operation:
+    adapter = adapter_registry.get(args.service)
+    if not adapter:
+        raise ValueError(f"No FULL_PREFLIGHT adapter is available for service '{args.service}'.")
+    payload = {
+        "operation": {
+            "service": args.service,
+            "resource_type": args.resource_type,
+            "region": args.region,
+            "availability_domain": args.availability_domain,
+            "compartment_id": args.compartment_id,
+            "compartment_name": "Production",
+            "requested": {"ocpus": args.requested_ocpus},
+        }
+    }
+    return adapter.operation_from_payload(payload)
 
 
 def format_result(result) -> str:
@@ -123,7 +146,7 @@ def main(argv=None) -> int:
         args.demo = "quota"
 
     if args.command in {None, "preflight"}:
-        operation = Operation(args.service, args.resource_type, args.region, args.compartment_id, {"ocpus": args.requested_ocpus}, args.availability_domain, "Production")
+        operation = operation_from_args(args)
         if args.real_oci:
             _, _, engine = build_real_oci_engine(args)
         else:

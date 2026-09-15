@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from .models import CapacityCheck, CapacitySnapshot, CheckStatus, Decision, Operation, PreflightResult
+from .models import CapabilityLevel, CapacityCheck, CapacitySnapshot, CheckStatus, Decision, Operation, PreflightResult
 from .providers import CapacityProvider
 
 
@@ -84,6 +84,23 @@ class CapacityDecisionEngine:
     def _build_check(self, operation: Operation, snapshot: CapacitySnapshot) -> CapacityCheck:
         requested = float(operation.requested_delta.get(snapshot.metric, 0))
         now = datetime.now(timezone.utc)
+        if snapshot.capability is not CapabilityLevel.FULL_PREFLIGHT:
+            return CapacityCheck(
+                constraint_type=snapshot.constraint_type,
+                service=snapshot.service,
+                limit_name=snapshot.limit_name,
+                scope=snapshot.scope,
+                metric=snapshot.metric,
+                unit=snapshot.unit or snapshot.metric,
+                current=snapshot.current,
+                maximum=snapshot.maximum,
+                available=snapshot.available,
+                requested_delta=requested,
+                projected=None,
+                status=CheckStatus.UNKNOWN,
+                reason=snapshot.reason or f"{snapshot.service}.{snapshot.limit_name} is {snapshot.capability.value}; it cannot be used for operation-level preflight yet.",
+                last_successful_evaluation=snapshot.timestamp.isoformat(),
+            )
         if snapshot.is_stale(now):
             return CapacityCheck(
                 constraint_type=snapshot.constraint_type,
@@ -91,6 +108,7 @@ class CapacityDecisionEngine:
                 limit_name=snapshot.limit_name,
                 scope=snapshot.scope,
                 metric=snapshot.metric,
+                unit=snapshot.unit or snapshot.metric,
                 current=snapshot.current,
                 maximum=snapshot.maximum,
                 available=snapshot.available,
@@ -107,6 +125,7 @@ class CapacityDecisionEngine:
                 limit_name=snapshot.limit_name,
                 scope=snapshot.scope,
                 metric=snapshot.metric,
+                unit=snapshot.unit or snapshot.metric,
                 current=snapshot.current,
                 maximum=snapshot.maximum,
                 available=snapshot.available,
@@ -125,6 +144,7 @@ class CapacityDecisionEngine:
                 limit_name=snapshot.limit_name,
                 scope=snapshot.scope,
                 metric=snapshot.metric,
+                unit=snapshot.unit or snapshot.metric,
                 current=snapshot.current,
                 maximum=snapshot.maximum,
                 available=snapshot.available,
@@ -142,6 +162,7 @@ class CapacityDecisionEngine:
             limit_name=snapshot.limit_name,
             scope=snapshot.scope,
             metric=snapshot.metric,
+            unit=snapshot.unit or snapshot.metric,
             current=snapshot.current,
             maximum=snapshot.maximum,
             available=snapshot.available,

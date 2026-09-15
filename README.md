@@ -1,8 +1,10 @@
 # OCI Capacity Preflight
 
-OCI Capacity Preflight is a customer-deployed reference implementation that answers one operational question before provisioning: will this planned OCI operation fit within the effective capacity available to the tenancy, compartment, region, and availability domain?
+OCI Capacity Preflight discovers applicable OCI limits and quotas and provides operation-level preflight checks where the platform has enough information to reliably evaluate the planned request.
 
 It is not another Limits, Quotas, or Usage dashboard. Those signals are inputs. Preflight is the decision layer on top.
+
+Compute OCPU capacity is the first `FULL_PREFLIGHT` implementation. Other OCI services can be discovered from OCI Limits APIs and may initially appear as `MONITOR_ONLY`, `DISCOVERY_ONLY`, or `UNSUPPORTED` until a verified service adapter exists.
 
 ## Value Proposition
 
@@ -12,7 +14,16 @@ OCI Capacity Preflight helps customers catch capacity, service-limit, and quota 
 PASS / BLOCK / Unable To Validate
 ```
 
-The customer sees current usage, available capacity, requested capacity, projected usage, blocking constraint, and remediation guidance.
+The customer sees current usage, available capacity, requested capacity, projected usage, blocking constraint, and remediation guidance for supported preflight adapters.
+
+Capability levels:
+
+| Capability | Meaning |
+| --- | --- |
+| `FULL_PREFLIGHT` | The tool can translate a planned operation into capacity consumption and evaluate it. |
+| `MONITOR_ONLY` | OCI exposes useful usage/availability, but no verified operation mapping exists yet. |
+| `DISCOVERY_ONLY` | OCI exposes the limit, but current usage/availability is not reliable enough for preflight. |
+| `UNSUPPORTED` | Required OCI information is unavailable or integration work is incomplete. |
 
 ## Screenshots
 
@@ -162,6 +173,9 @@ Allow dynamic-group <DYNAMIC_GROUP_NAME> to inspect quotas in tenancy
 
 - `POST /preflight`
 - `POST /preflight/batch`
+- `GET /services`
+- `GET /services/{service}/limits`
+- `GET /capacity`
 - `GET /risk`
 - `GET /health`
 
@@ -197,7 +211,26 @@ oci-capacity-preflight preflight \
   --limit-name standard-e4-core-count
 ```
 
-For OCI Functions, set `OCI_CAPACITY_PREFLIGHT_MODE=oci` and use resource principals. The API path builds OCI clients with `oci.auth.signers.get_resource_principals_signer()`.
+For OCI Functions, set `OCI_CAPACITY_PREFLIGHT_MODE=oci` and use resource principals. For team review on a Compute runner, use Instance Principal by setting `OCI_CAPACITY_PREFLIGHT_AUTH=instance_principal`.
+
+Generic API shape:
+
+```json
+{
+  "service": "compute",
+  "operation": {
+    "resource_type": "instance",
+    "region": "<TARGET_REGION>",
+    "availability_domain": "<VALID_AD>",
+    "compartment_id": "<COMPARTMENT_OCID>",
+    "requested": {
+      "ocpus": 14
+    }
+  }
+}
+```
+
+If a service does not have a `FULL_PREFLIGHT` adapter, `/preflight` returns `UNKNOWN` / Unable To Validate rather than a false `PASS`.
 
 ## Terraform Workflow
 

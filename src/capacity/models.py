@@ -20,6 +20,13 @@ class CheckStatus(str, Enum):
     ERROR = "ERROR"
 
 
+class CapabilityLevel(str, Enum):
+    FULL_PREFLIGHT = "FULL_PREFLIGHT"
+    MONITOR_ONLY = "MONITOR_ONLY"
+    DISCOVERY_ONLY = "DISCOVERY_ONLY"
+    UNSUPPORTED = "UNSUPPORTED"
+
+
 @dataclass(frozen=True)
 class Operation:
     service: str
@@ -32,6 +39,12 @@ class Operation:
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "Operation":
+        if "operation" in payload:
+            operation = dict(payload["operation"])
+            if payload.get("service") and not operation.get("service"):
+                operation["service"] = payload["service"]
+            payload = operation
+        requested = payload.get("requested_delta") or payload.get("requested") or {}
         return cls(
             service=payload["service"],
             resource_type=payload.get("resource_type"),
@@ -39,7 +52,7 @@ class Operation:
             availability_domain=payload.get("availability_domain"),
             compartment_id=payload["compartment_id"],
             compartment_name=payload.get("compartment_name"),
-            requested_delta={k: float(v) for k, v in payload.get("requested_delta", {}).items()},
+            requested_delta={k: float(v) for k, v in requested.items()},
         )
 
 
@@ -53,6 +66,8 @@ class CapacitySnapshot:
     current: float | None
     maximum: float | None
     available: float | None
+    unit: str | None = None
+    capability: CapabilityLevel = CapabilityLevel.FULL_PREFLIGHT
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     stale_after_seconds: int = 900
     reason: str | None = None
@@ -74,6 +89,7 @@ class CapacityCheck:
     limit_name: str
     scope: str
     metric: str
+    unit: str | None
     current: float | None
     maximum: float | None
     requested_delta: float
@@ -91,6 +107,7 @@ class CapacityCheck:
             "limit_name": self.limit_name,
             "scope": self.scope,
             "metric": self.metric,
+            "unit": self.unit or self.metric,
             "current": self.current,
             "maximum": self.maximum,
             "available": self.available,
@@ -139,4 +156,34 @@ class PreflightResult:
             "recommendations": self.recommendations,
             "unknown_reasons": self.unknown_reasons,
             "evaluated_at": self.evaluated_at.isoformat(),
+        }
+
+
+@dataclass
+class LimitCapability:
+    service: str
+    service_description: str | None
+    limit_name: str
+    scope_type: str | None
+    limit_value: float | None
+    current_usage: float | None
+    available: float | None
+    capability: CapabilityLevel
+    unit: str | None = None
+    reason: str | None = None
+    is_eligible_for_increase: bool | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "service": self.service,
+            "service_description": self.service_description,
+            "limit_name": self.limit_name,
+            "scope_type": self.scope_type,
+            "limit_value": self.limit_value,
+            "current_usage": self.current_usage,
+            "available": self.available,
+            "capability": self.capability.value,
+            "unit": self.unit,
+            "reason": self.reason,
+            "is_eligible_for_increase": self.is_eligible_for_increase,
         }

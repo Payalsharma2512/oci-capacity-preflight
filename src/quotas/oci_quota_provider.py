@@ -28,7 +28,8 @@ class OciQuotaProvider(CapacityProvider):
         try:
             quotas = self._list_quotas()
         except Exception as exc:
-            return [CapacitySnapshot("COMPARTMENT_QUOTA", operation.service, "quota-policy", operation.compartment_id, "ocpus", None, None, None, reason=f"Compartment quota could not be evaluated because the required API permission is missing or failed: {exc}")]
+            metric = next(iter(operation.requested_delta), "unknown")
+            return [CapacitySnapshot("COMPARTMENT_QUOTA", operation.service, "quota-policy", operation.compartment_id, metric, None, None, None, reason=f"Compartment quota could not be evaluated because the required API permission is missing or failed: {exc}")]
 
         for quota in quotas:
             for statement in getattr(quota, "statements", []) or []:

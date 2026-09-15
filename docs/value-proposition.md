@@ -2,7 +2,9 @@
 
 ## Summary
 
-OCI Capacity Preflight is a pre-deployment readiness gate for OCI capacity. It checks a planned deployment against live OCI limits, quotas, and current availability before provisioning starts.
+OCI Capacity Preflight discovers applicable OCI limits and quotas and provides operation-level preflight checks where the platform has enough information to reliably evaluate the planned request.
+
+Compute OCPU is the first `FULL_PREFLIGHT` implementation. Other services can still be discovered and monitored, but they are not treated as deployment-ready checks until a verified adapter can translate customer intent into limit consumption.
 
 ## Customer Problem
 
@@ -19,6 +21,8 @@ The tool returns:
 - `PASS`: no known capacity constraint detected
 - `BLOCK`: the request is expected to exceed a known constraint
 - friendly validation errors: authentication, IAM, region, AD, or API input must be fixed before trusting the result
+
+The tool does not return `PASS` for `MONITOR_ONLY`, `DISCOVERY_ONLY`, or `UNSUPPORTED` limits.
 
 ## What Reviewers See
 
@@ -45,6 +49,7 @@ OCI Capacity Preflight is different: it is a deployment decision layer.
 | Does it evaluate quota impact? | Limited/not primary | Yes |
 | Does it return PASS/BLOCK before deployment? | No | Yes |
 | Does it provide remediation? | No | Yes |
+| Does it classify unsupported limits safely? | No | Yes |
 
 ## Positioning
 
@@ -53,7 +58,7 @@ Service Limit Tool = reporting and comparison
 OCI Capacity Preflight = deployment readiness gate
 ```
 
-Together, the tools are complementary. The CSV tool helps identify limit differences. Capacity Preflight helps customers decide whether a specific deployment should proceed.
+Together, the tools are complementary. The CSV tool helps identify limit differences. Capacity Preflight helps customers decide whether a specific supported deployment should proceed.
 
 ## Team Review Test Plan
 
