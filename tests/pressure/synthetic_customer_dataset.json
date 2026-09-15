@@ -1,0 +1,44 @@
+{
+  "regions": ["us-phoenix-1", "us-ashburn-1", "ca-toronto-1"],
+  "compartments": [
+    {"id": "compartment-prod", "name": "Production"},
+    {"id": "compartment-dev", "name": "Development"},
+    {"id": "compartment-analytics", "name": "Analytics"},
+    {"id": "compartment-network", "name": "Network"},
+    {"id": "compartment-security", "name": "Security"}
+  ],
+  "limits": [
+    {"service": "compute", "name": "standard-e4-core-count", "scope": "us-phoenix-1", "metric": "ocpus", "current": 72, "maximum": 80, "available": 8},
+    {"service": "compute", "name": "standard-e4-core-count", "scope": "us-ashburn-1", "metric": "ocpus", "current": 50, "maximum": 100, "available": 50},
+    {"service": "compute", "name": "standard-e4-core-count", "scope": "ca-toronto-1", "metric": "ocpus", "current": 10, "maximum": 40, "available": 30},
+    {"service": "compute", "name": "gpu-a10-count", "scope": "us-phoenix-1/AD-1", "metric": "gpus", "current": 4, "maximum": 6, "available": 2},
+    {"service": "compute", "name": "gpu-a10-count", "scope": "us-phoenix-1/AD-2", "metric": "gpus", "current": 1, "maximum": 6, "available": 5},
+    {"service": "blockstorage", "name": "total-storage-gb", "scope": "us-phoenix-1", "metric": "gb", "current": 45000, "maximum": 50000, "available": 5000},
+    {"service": "blockstorage", "name": "volume-count", "scope": "us-phoenix-1", "metric": "count", "current": 80, "maximum": 100, "available": 20},
+    {"service": "objectstorage", "name": "bucket-count", "scope": "GLOBAL", "metric": "count", "current": 740, "maximum": 1000, "available": 260},
+    {"service": "objectstorage", "name": "namespace-capacity", "scope": "GLOBAL", "metric": "tb", "current": 91, "maximum": 100, "available": 9},
+    {"service": "network", "name": "vcn-count", "scope": "us-phoenix-1", "metric": "count", "current": 8, "maximum": 10, "available": 2},
+    {"service": "network", "name": "public-ip-count", "scope": "us-phoenix-1", "metric": "count", "current": 95, "maximum": 100, "available": 5},
+    {"service": "loadbalancer", "name": "lb-flex-bandwidth-mbps", "scope": "us-phoenix-1", "metric": "mbps", "current": 6000, "maximum": 8000, "available": 2000},
+    {"service": "database", "name": "vm-db-ocpu-count", "scope": "us-phoenix-1", "metric": "ocpus", "current": 20, "maximum": 32, "available": 12},
+    {"service": "database", "name": "autonomous-ocpu-count", "scope": "us-ashburn-1", "metric": "ocpus", "current": 56, "maximum": 64, "available": 8},
+    {"service": "oke", "name": "cluster-count", "scope": "us-phoenix-1", "metric": "count", "current": 3, "maximum": 5, "available": 2},
+    {"service": "functions", "name": "application-count", "scope": "us-phoenix-1", "metric": "count", "current": 39, "maximum": 50, "available": 11},
+    {"service": "streaming", "name": "stream-count", "scope": "us-phoenix-1", "metric": "count", "current": 19, "maximum": 20, "available": 1},
+    {"service": "apigateway", "name": "gateway-count", "scope": "us-phoenix-1", "metric": "count", "current": 5, "maximum": 10, "available": 5},
+    {"service": "compute", "name": "unsupported-shape-count", "scope": "us-phoenix-1", "metric": "count", "current": null, "maximum": null, "available": null, "reason": "GetResourceAvailability returned 404 unsupported"},
+    {"service": "compute", "name": "stale-core-count", "scope": "ca-toronto-1", "metric": "ocpus", "current": 38, "maximum": 40, "available": 2, "stale": true}
+  ],
+  "quotas": [
+    {"compartment_id": "compartment-prod", "service": "compute", "limit_name": "standard-e4-core-count", "metric": "ocpus", "current": 18, "maximum": 20, "available": 2},
+    {"compartment_id": "compartment-dev", "service": "compute", "limit_name": "standard-e4-core-count", "metric": "ocpus", "current": 10, "maximum": 30, "available": 20},
+    {"compartment_id": "compartment-analytics", "service": "blockstorage", "limit_name": "total-storage-gb", "metric": "gb", "current": 1000, "maximum": 8000, "available": 7000},
+    {"compartment_id": "compartment-network", "service": "network", "limit_name": "public-ip-count", "metric": "count", "current": 4, "maximum": 5, "available": 1},
+    {"compartment_id": "compartment-security", "service": "objectstorage", "limit_name": "bucket-count", "metric": "count", "current": 2, "maximum": 10, "available": 8}
+  ],
+  "forecast_history": {
+    "soon": [{"days_ago": 4, "usage": 66}, {"days_ago": 0, "usage": 72}],
+    "slow": [{"days_ago": 10, "usage": 10}, {"days_ago": 0, "usage": 12}],
+    "insufficient": [{"days_ago": 0, "usage": 72}]
+  }
+}

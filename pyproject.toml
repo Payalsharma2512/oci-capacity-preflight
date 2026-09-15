@@ -1,0 +1,17 @@
+[project]
+name = "oci-capacity-preflight"
+version = "0.1.0"
+description = "Customer-deployed OCI capacity preflight decision layer"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+oci = ["oci>=2.182.0"]
+api = ["fastapi>=0.115.0", "uvicorn>=0.30.0"]
+
+[project.scripts]
+oci-capacity-preflight = "cli.main:main"
+
+[tool.setuptools]
+py-modules = []
+packages = ["src", "src.capacity", "src.limits", "src.quotas", "src.usage", "src.preflight", "src.forecasting", "src.notifications", "src.api", "cli"]

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OCI Capacity Preflight</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="health">
+      <h1>OCI Capacity Preflight</h1>
+      <div class="metrics">
+        <div><strong id="decisionMetric">-</strong><span>Last result</span></div>
+        <div><strong id="availableMetric">-</strong><span>Available OCPUs</span></div>
+        <div><strong id="requestedMetric">14</strong><span>Requested OCPUs</span></div>
+        <div><strong>IAD</strong><span>Target region</span></div>
+        <div><strong>IAD</strong><span>Quota region</span></div>
+      </div>
+      <article class="risk">
+        <h2>Compute</h2>
+        <p>standard-e4-core-count</p>
+        <dl><dt>Tenancy</dt><dd>Connected</dd><dt>Region</dt><dd>us-ashburn-1</dd><dt>AD</dt><dd><VALID_AD></dd><dt>Compartment</dt><dd id="compartmentLabel">Production</dd><dt>Status</dt><dd id="statusLabel">Waiting</dd></dl>
+      </article>
+    </section>
+    <section class="precheck">
+      <h1>Precheck A Deployment</h1>
+      <label>Service<select id="service"><option>Compute</option></select></label>
+      <label>Resource<select id="resource"><option>Instance</option></select></label>
+      <label>Region<input id="region" value="us-ashburn-1"></label>
+      <label>Quota Region<input id="quotaRegion" value="us-ashburn-1"></label>
+      <label>Availability Domain<input id="availabilityDomain" value="<VALID_AD>"></label>
+      <label>Compartment OCID<input id="compartment" value="<COMPARTMENT_OCID>"></label>
+      <label>OCPUs<input id="ocpus" type="number" value="14"></label>
+      <button id="run">Run Preflight</button>
+      <section id="result"></section>
+    </section>
+  </main>
+  <script src="app.js?v=live-oci-20260915"></script>
+</body>
+</html>
