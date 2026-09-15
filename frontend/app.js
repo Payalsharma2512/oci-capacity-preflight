@@ -6,7 +6,11 @@ const runButton = document.querySelector("#run");
 const decisionMetric = document.querySelector("#decisionMetric");
 const availableMetric = document.querySelector("#availableMetric");
 const requestedMetric = document.querySelector("#requestedMetric");
+const targetRegionMetric = document.querySelector("#targetRegionMetric");
+const quotaRegionMetric = document.querySelector("#quotaRegionMetric");
 const statusLabel = document.querySelector("#statusLabel");
+const regionLabel = document.querySelector("#regionLabel");
+const adLabel = document.querySelector("#adLabel");
 const compartmentLabel = document.querySelector("#compartmentLabel");
 
 function field(id) {
@@ -21,6 +25,22 @@ function setStatus(text, className = "") {
 
 function formatValue(value) {
   return value === null || value === undefined ? "-" : value;
+}
+
+function regionShortName(region) {
+  if (!region) {
+    return "-";
+  }
+  const parts = region.split("-");
+  return parts.length >= 2 ? parts[1].toUpperCase() : region.toUpperCase();
+}
+
+function syncFormSummary() {
+  targetRegionMetric.textContent = regionShortName(field("region"));
+  quotaRegionMetric.textContent = regionShortName(field("quotaRegion"));
+  regionLabel.textContent = field("region") || "-";
+  adLabel.textContent = field("availabilityDomain") || "-";
+  requestedMetric.textContent = field("ocpus") || "-";
 }
 
 function classifyUnknown(reasons) {
@@ -80,7 +100,11 @@ function renderResult(data) {
   decisionMetric.textContent = headline;
   availableMetric.textContent = formatValue(data.effective_available_capacity);
   requestedMetric.textContent = requested;
+  targetRegionMetric.textContent = regionShortName(data.operation?.region || field("region"));
+  quotaRegionMetric.textContent = regionShortName(field("quotaRegion"));
   statusLabel.textContent = headline;
+  regionLabel.textContent = data.operation?.region || field("region") || "-";
+  adLabel.textContent = data.operation?.availability_domain || field("availabilityDomain") || "-";
   compartmentLabel.textContent = "Production";
 
   const checkRows = checks.map((check) => `
@@ -208,6 +232,7 @@ function demoResult(kind) {
 }
 
 async function runPreflight() {
+  syncFormSummary();
   runButton.disabled = true;
   setStatus("<h2>Running</h2><p>Checking OCI capacity and quotas...</p>");
 
@@ -254,4 +279,8 @@ async function runPreflight() {
 }
 
 runButton.addEventListener("click", runPreflight);
+["region", "quotaRegion", "availabilityDomain", "ocpus"].forEach((id) => {
+  document.querySelector(`#${id}`).addEventListener("input", syncFormSummary);
+});
+syncFormSummary();
 runPreflight();
