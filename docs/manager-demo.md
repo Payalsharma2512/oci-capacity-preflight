@@ -31,7 +31,7 @@ OCI already provides the source signals: service limits, resource availability, 
 
 ## OCI-Wide Discovery Results
 
-The recorded OCI runner used Instance Principal auth in `us-ashburn-1`, quota region `us-ashburn-1`, and AD `FZyT:US-ASHBURN-AD-1`.
+The recorded OCI runner used Instance Principal auth in `us-ashburn-1`, quota region `us-ashburn-1`, and a tenancy-specific availability domain.
 
 Real discovery found:
 

@@ -5,7 +5,7 @@ Validation target:
 - Auth: Instance Principal
 - Region: `us-ashburn-1`
 - Quota region: `us-ashburn-1`
-- Availability domain: `FZyT:US-ASHBURN-AD-1`
+- Availability domain: `<availability-domain>`
 
 ## Discovery Summary
 
