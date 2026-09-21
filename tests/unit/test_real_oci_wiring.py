@@ -19,6 +19,7 @@ class RealOciWiringTests(unittest.TestCase):
             LimitsClient=lambda config, **kwargs: ("limits", config, kwargs),
             QuotasClient=lambda config, **kwargs: ("quotas", config, kwargs),
         )
+        fake_oci.core = types.SimpleNamespace(ComputeClient=lambda config, **kwargs: ("compute", config, kwargs))
         fake_oci.auth = types.SimpleNamespace(signers=types.SimpleNamespace())
 
         with patch.dict(sys.modules, {"oci": fake_oci}):
@@ -29,6 +30,7 @@ class RealOciWiringTests(unittest.TestCase):
         self.assertEqual(clients.quotas_config["region"], "us-ashburn-1")
         self.assertEqual(clients.limits_client[0], "limits")
         self.assertEqual(clients.quotas_client[0], "quotas")
+        self.assertEqual(clients.compute_client[0], "compute")
 
     def test_resource_principal_auth_uses_signer_without_config_file(self):
         signer = types.SimpleNamespace(tenancy_id="tenancy-from-signer")
@@ -39,6 +41,7 @@ class RealOciWiringTests(unittest.TestCase):
             LimitsClient=lambda config, **kwargs: ("limits", config, kwargs),
             QuotasClient=lambda config, **kwargs: ("quotas", config, kwargs),
         )
+        fake_oci.core = types.SimpleNamespace(ComputeClient=lambda config, **kwargs: ("compute", config, kwargs))
         fake_oci.auth = types.SimpleNamespace(signers=types.SimpleNamespace(get_resource_principals_signer=lambda: signer))
 
         with patch.dict(sys.modules, {"oci": fake_oci}):
@@ -57,6 +60,7 @@ class RealOciWiringTests(unittest.TestCase):
             LimitsClient=lambda config, **kwargs: ("limits", config, kwargs),
             QuotasClient=lambda config, **kwargs: ("quotas", config, kwargs),
         )
+        fake_oci.core = types.SimpleNamespace(ComputeClient=lambda config, **kwargs: ("compute", config, kwargs))
         fake_oci.auth = types.SimpleNamespace(
             signers=types.SimpleNamespace(InstancePrincipalsSecurityTokenSigner=lambda: signer)
         )
@@ -96,6 +100,7 @@ class RealOciWiringTests(unittest.TestCase):
                 LimitsClient=lambda config, **kwargs: ("limits", config, kwargs),
                 QuotasClient=lambda config, **kwargs: ("quotas", config, kwargs),
             )
+            fake_oci.core = types.SimpleNamespace(ComputeClient=lambda config, **kwargs: ("compute", config, kwargs))
             fake_oci.signer = types.SimpleNamespace()
             setattr(fake_oci.signer, "load_" + "private" + "_key_from_file", lambda filename: f"loaded:{filename}")
             fake_oci.auth = types.SimpleNamespace(

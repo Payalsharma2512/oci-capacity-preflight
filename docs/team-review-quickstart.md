@@ -14,6 +14,7 @@ OCI Compute instance, localhost only
   - POST /preflight
   - GET /services
   - GET /capacity
+  - GET /compute/shapes
   - GET /health
   |
   | Instance Principal
@@ -56,7 +57,8 @@ oci iam policy create \
   --description "Read-only OCI Limits and Quotas access for Capacity Preflight review" \
   --statements '[
     "Allow dynamic-group oci-capacity-preflight-review-instance to inspect limits in tenancy",
-    "Allow dynamic-group oci-capacity-preflight-review-instance to inspect quotas in tenancy"
+    "Allow dynamic-group oci-capacity-preflight-review-instance to read quotas in tenancy",
+    "Allow dynamic-group oci-capacity-preflight-review-instance to inspect instance-family in tenancy"
   ]'
 ```
 
@@ -84,13 +86,17 @@ Example `.env.team-review`:
 
 ```bash
 OCI_TENANCY_OCID=<TENANCY_OCID>
+OCI_MODE=live
+AUTH=instance_principal
 OCI_CAPACITY_PREFLIGHT_REGION=us-ashburn-1
 OCI_CAPACITY_PREFLIGHT_QUOTA_REGION=us-ashburn-1
 OCI_CAPACITY_PREFLIGHT_MODE=oci
 OCI_CAPACITY_PREFLIGHT_AUTH=instance_principal
+OCI_CAPACITY_PREFLIGHT_COMPARTMENT_ID=<TARGET_COMPARTMENT_OCID>
+OCI_CAPACITY_PREFLIGHT_AVAILABILITY_DOMAIN=<VALID_AD>
 OCI_CAPACITY_PREFLIGHT_BIND_HOST=127.0.0.1
 OCI_CAPACITY_PREFLIGHT_PORT=8000
-OCI_CAPACITY_PREFLIGHT_COMPUTE_OCPU_LIMIT=standard-e4-core-count
+OCI_CAPACITY_PREFLIGHT_COMPUTE_OCPU_LIMIT=standard-e5-core-count
 ```
 
 Load the environment:
@@ -106,28 +112,34 @@ set +a
 Run this before starting the UI:
 
 ```bash
-python3.11 -m cli.main validate-oci \
+python3.11 -m cli.main doctor \
+  --real-oci \
   --auth instance_principal \
   --tenancy-id "$OCI_TENANCY_OCID" \
   --region "$TARGET_REGION" \
   --quota-region "$OCI_CAPACITY_PREFLIGHT_QUOTA_REGION" \
   --availability-domain "$AVAILABILITY_DOMAIN" \
   --compartment-id "$TARGET_COMPARTMENT_OCID" \
-  --limit-name standard-e4-core-count
+  --limit-name standard-e5-core-count
 ```
 
 Expected result:
 
 ```text
-OCI INSTANCE PRINCIPAL VALIDATION
-===============================
-Limits API: OK
-Quotas API: OK
+OCI CAPACITY PREFLIGHT DOCTOR
+=============================
+PASS Instance Principal authentication: instance_principal authenticated
+PASS Tenancy access: ...
+PASS Limits API access: ...
+PASS Quotas API access: ...
+PASS Compute shape API access: ...
+PASS Required IAM permissions: limits/quota/instance-family reads succeeded
+RESULT: PASS
 ```
 
 ## One-Command Startup
 
-Start the backend and UI:
+Start the backend and UI. The script runs `python -m cli.main doctor --real-oci --auth instance_principal` before binding the app, so a bad live OCI setup fails closed before reviewers see the UI:
 
 ```bash
 bash scripts/team-review-start.sh
@@ -140,6 +152,7 @@ http://127.0.0.1:8000/
 http://127.0.0.1:8000/health
 http://127.0.0.1:8000/services
 http://127.0.0.1:8000/capacity
+http://127.0.0.1:8000/compute/shapes
 http://127.0.0.1:8000/preflight
 ```
 
@@ -175,9 +188,12 @@ The UI is read-only with respect to OCI. Reviewers can enter:
 - quota/home region
 - availability domain
 - compartment OCID
-- requested capacity
+- Compute shape
+- number of instances
+- OCPUs and memory per instance for Flex shapes
+- requested OCPUs in Advanced Manual mode
 
-The UI calls `GET /capacity` to show the capability matrix and `POST /preflight` only for `FULL_PREFLIGHT` selections. Compute OCPU is the first full preflight adapter. Other services may appear as `MONITOR_ONLY`, `DISCOVERY_ONLY`, or `UNSUPPORTED`.
+The UI calls `GET /compute/shapes` to populate valid Compute shapes for the selected region, compartment, and AD. It calls `GET /capacity` to show the capability matrix. Compute workload preflight is evaluated only when the selected shape can be reliably mapped to discovered OCI limit definitions.
 
 The result shows:
 
@@ -189,6 +205,7 @@ The result shows:
 - capability level
 - projected usage
 - remediation
+- a clear note that service-limit capacity is not a guarantee of real-time physical host availability
 
 The API still returns raw `UNKNOWN` for automation when a check cannot be fully evaluated. The UI translates common `UNKNOWN` causes into reviewer-friendly messages and keeps the raw reason under `Technical Details`.
 
@@ -203,7 +220,7 @@ The API still returns raw `UNKNOWN` for automation when a check cannot be fully 
 
 `404 NotAuthorizedOrNotFound` or `403 NotAllowed` for quotas:
 
-- Confirm the dynamic group has `inspect quotas in tenancy`.
+- Confirm the dynamic group has `read quotas in tenancy`.
 - Confirm quota calls use the tenancy home region in `OCI_CAPACITY_PREFLIGHT_QUOTA_REGION`.
 
 `Invalid parameter availabilityDomain`:

@@ -4,7 +4,11 @@ OCI Capacity Preflight discovers applicable OCI limits and quotas and provides o
 
 It is not another Limits, Quotas, or Usage dashboard. Those signals are inputs. Preflight is the decision layer on top.
 
-Compute OCPU capacity is the first `FULL_PREFLIGHT` implementation. Other OCI services can be discovered from OCI Limits APIs and may initially appear as `MONITOR_ONLY`, `DISCOVERY_ONLY`, or `UNSUPPORTED` until a verified service adapter exists.
+Compute is the first `FULL_PREFLIGHT` implementation. The primary Compute flow is workload-based: reviewers choose a shape and instance count, and the Compute adapter calculates the required OCPUs and memory before evaluating verified service-limit and quota constraints.
+
+Block Volume is the second `FULL_PREFLIGHT` implementation. Reviewers enter volume count and size per volume, and the Block Volume adapter calculates requested volume count and total storage GB before evaluating verified service-limit and quota constraints.
+
+Other OCI services can be discovered from OCI Limits APIs and may initially appear as `MONITOR_ONLY`, `DISCOVERY_ONLY`, or `UNSUPPORTED` until a verified service adapter exists.
 
 ## Value Proposition
 
@@ -14,7 +18,7 @@ OCI Capacity Preflight helps customers catch capacity, service-limit, and quota 
 PASS / BLOCK / Unable To Validate
 ```
 
-The customer sees current usage, available capacity, requested capacity, projected usage, blocking constraint, and remediation guidance for supported preflight adapters.
+The customer sees planned workload, current usage, available capacity, requested capacity, projected usage, blocking constraint, and remediation guidance for supported preflight adapters.
 
 Capability levels:
 
@@ -152,6 +156,8 @@ No known capacity constraint detected.
 
 A successful preflight reduces avoidable capacity failures but cannot guarantee that the subsequent OCI operation will succeed. The actual OCI service remains authoritative, and another operation can consume capacity after preflight.
 
+For Compute, the tool evaluates service-limit and quota capacity where the selected shape can be reliably mapped to discovered OCI limit definitions. This is not the same as proving real-time physical host or shape availability.
+
 ## OCI APIs
 
 Service limits use OCI Limits APIs: `ListServices`, `ListLimitDefinitions`, `ListLimitValues`, and `GetResourceAvailability`. Quotas use OCI quota APIs, including `list_quotas`. The implementation discovers limits dynamically and returns `UNKNOWN` when an applicable constraint cannot be evaluated.
@@ -166,7 +172,8 @@ Minimum IAM policy:
 
 ```text
 Allow dynamic-group <DYNAMIC_GROUP_NAME> to inspect limits in tenancy
-Allow dynamic-group <DYNAMIC_GROUP_NAME> to inspect quotas in tenancy
+Allow dynamic-group <DYNAMIC_GROUP_NAME> to read quotas in tenancy
+Allow dynamic-group <DYNAMIC_GROUP_NAME> to inspect instance-family in tenancy
 ```
 
 ## API
@@ -176,8 +183,27 @@ Allow dynamic-group <DYNAMIC_GROUP_NAME> to inspect quotas in tenancy
 - `GET /services`
 - `GET /services/{service}/limits`
 - `GET /capacity`
+- `GET /compute/shapes`
 - `GET /risk`
 - `GET /health`
+
+Block Volume workload example:
+
+```json
+{
+  "service": "blockvolume",
+  "operation": {
+    "operation": "create_volumes",
+    "region": "<TARGET_REGION>",
+    "availability_domain": "<VALID_AD>",
+    "compartment_id": "<COMPARTMENT_OCID>",
+    "workload": {
+      "volume_count": 5,
+      "size_gb_each": 2048
+    }
+  }
+}
+```
 
 ## CLI
 
@@ -219,6 +245,27 @@ Generic API shape:
 {
   "service": "compute",
   "operation": {
+    "operation": "create_instances",
+    "resource_type": "instance",
+    "region": "<TARGET_REGION>",
+    "availability_domain": "<VALID_AD>",
+    "compartment_id": "<COMPARTMENT_OCID>",
+    "workload": {
+      "shape": "VM.Standard.E5.Flex",
+      "instance_count": 5,
+      "ocpus_per_instance": 4,
+      "memory_gb_per_instance": 32
+    }
+  }
+}
+```
+
+Advanced/manual mode remains available for automation callers that already know the capacity delta:
+
+```json
+{
+  "service": "compute",
+  "operation": {
     "resource_type": "instance",
     "region": "<TARGET_REGION>",
     "availability_domain": "<VALID_AD>",
@@ -230,7 +277,7 @@ Generic API shape:
 }
 ```
 
-If a service does not have a `FULL_PREFLIGHT` adapter, `/preflight` returns `UNKNOWN` / Unable To Validate rather than a false `PASS`.
+If a service or Compute shape cannot be mapped to a verified `FULL_PREFLIGHT` constraint, `/preflight` returns `UNKNOWN` / Unable To Validate rather than a false `PASS`. The Compute workload path never silently falls back to `standard-e4-core-count`.
 
 ## Terraform Workflow
 

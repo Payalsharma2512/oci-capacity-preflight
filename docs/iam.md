@@ -4,7 +4,8 @@ Use resource principals for OCI Functions where possible. Grant the function dyn
 
 ```text
 Allow dynamic-group oci-capacity-preflight-functions to inspect limits in tenancy
-Allow dynamic-group oci-capacity-preflight-functions to inspect quotas in tenancy
+Allow dynamic-group oci-capacity-preflight-functions to read quotas in tenancy
+Allow dynamic-group oci-capacity-preflight-functions to inspect instance-family in tenancy
 Allow dynamic-group oci-capacity-preflight-functions to read metrics in tenancy
 Allow dynamic-group oci-capacity-preflight-functions to manage objects in compartment <snapshot-compartment> where target.bucket.name='oci-capacity-preflight-snapshots'
 Allow dynamic-group oci-capacity-preflight-functions to use ons-topics in compartment <ops-compartment>

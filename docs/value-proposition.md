@@ -4,7 +4,7 @@
 
 OCI Capacity Preflight discovers applicable OCI limits and quotas and provides operation-level preflight checks where the platform has enough information to reliably evaluate the planned request.
 
-Compute OCPU is the first `FULL_PREFLIGHT` implementation. Other services can still be discovered and monitored, but they are not treated as deployment-ready checks until a verified adapter can translate customer intent into limit consumption.
+Compute is the first `FULL_PREFLIGHT` implementation. Customers can describe the Compute workload they want to deploy by shape and instance count; the tool calculates OCPUs and memory. Other services can still be discovered and monitored, but they are not treated as deployment-ready checks until a verified adapter can translate customer intent into limit consumption.
 
 ## Customer Problem
 
@@ -27,12 +27,15 @@ The tool does not return `PASS` for `MONITOR_ONLY`, `DISCOVERY_ONLY`, or `UNSUPP
 ## What Reviewers See
 
 - effective available capacity
+- planned Compute workload
 - blocking constraint
 - current usage
 - applicable limit or quota
 - requested capacity
 - projected usage
 - remediation guidance
+
+For Compute, service-limit capacity and real-time physical host/shape availability are shown as separate concepts. This prototype does not claim host availability unless a future integration explicitly checks it.
 
 ## Differentiation
 

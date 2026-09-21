@@ -34,9 +34,11 @@ class OciQuotaProvider(CapacityProvider):
         for quota in quotas:
             for statement in getattr(quota, "statements", []) or []:
                 parsed = self._parse(statement)
-                if not parsed or parsed["service"] != operation.service:
+                if not parsed or self._normalize_service(parsed["service"]) != operation.service:
                     continue
-                metric = "ocpus" if "core" in parsed["limit"] or "ocpu" in parsed["limit"] else parsed["limit"]
+                if not self._limit_applies(operation.service, parsed["limit"]):
+                    continue
+                metric = self._metric_for_limit(parsed["limit"])
                 try:
                     current = self.usage_provider.current_usage(operation, metric)
                     maximum = parsed["value"]
@@ -53,7 +55,13 @@ class OciQuotaProvider(CapacityProvider):
         page = None
         while True:
             response = self.client.list_quotas(self.root_compartment_id, page=page, lifecycle_state="ACTIVE")
-            items.extend(response.data if isinstance(response.data, list) else [response.data])
+            summaries = response.data if isinstance(response.data, list) else [response.data]
+            for item in summaries:
+                if getattr(item, "statements", None):
+                    items.append(item)
+                else:
+                    quota_id = getattr(item, "id", None)
+                    items.append(self.client.get_quota(quota_id).data if quota_id else item)
             page = response.headers.get("opc-next-page") if hasattr(response, "headers") else None
             if not page:
                 return items
@@ -63,3 +71,35 @@ class OciQuotaProvider(CapacityProvider):
         if not match:
             return None
         return {"service": match.group("service"), "limit": match.group("limit"), "value": float(match.group("value"))}
+
+    def _metric_for_limit(self, limit_name: str) -> str:
+        lower = limit_name.lower()
+        if lower == "volume-count":
+            return "volume_count"
+        if lower in {"total-storage-gb", "total-free-storage-gb"}:
+            return "storage_gb"
+        if lower == "total-replica-storage-gb":
+            return "replica_storage_gb"
+        if lower == "max-nlb-flexible-count":
+            return "nlb_count"
+        if "core" in lower or "ocpu" in lower:
+            return "ocpus"
+        if "memory" in lower or "mem" in lower:
+            return "memory_gb"
+        return limit_name
+
+    def _normalize_service(self, service_name: str) -> str:
+        lower = service_name.lower()
+        if lower in {"compute-core", "compute-memory", "compute-gpu"}:
+            return "compute"
+        if lower in {"blockvolume", "block-volume", "block-storage", "block-volume-service"}:
+            return "block-storage"
+        if lower in {"nlb", "network-load-balancer", "network-load-balancer-api"}:
+            return "network-load-balancer-api"
+        return lower
+
+    def _limit_applies(self, service_name: str, limit_name: str) -> bool:
+        limit_mapping = getattr(self.usage_provider, "limit_mapping", None)
+        if not limit_mapping:
+            return True
+        return limit_name in set(limit_mapping.get(service_name, {}).values())

@@ -27,9 +27,15 @@ class OciLimitsProvider(CapacityProvider):
         metric_map = self.limit_mapping.get(operation.service, {})
         if not metric_map:
             return [CapacitySnapshot("SERVICE_LIMIT", operation.service, "unmapped-limit", operation.region, "unknown", None, None, None, reason=f"No OCI limit mapping configured for service {operation.service}.")]
+        definitions = self._definition_by_name(operation.service)
         for metric, limit_name in metric_map.items():
+            definition = definitions.get(limit_name)
+            scope_type = str(getattr(definition, "scope_type", "") or "").upper()
+            if scope_type.endswith("AD") and not operation.availability_domain:
+                snapshots.append(CapacitySnapshot("SERVICE_LIMIT", operation.service, limit_name, operation.region, metric, None, None, None, reason=f"{operation.service}.{limit_name} is AD-scoped; availability_domain is required."))
+                continue
             kwargs = {}
-            if operation.availability_domain:
+            if operation.availability_domain and scope_type.endswith("AD"):
                 kwargs["availability_domain"] = operation.availability_domain
             try:
                 availability = self.client.get_resource_availability(
@@ -41,7 +47,8 @@ class OciLimitsProvider(CapacityProvider):
                 available = getattr(availability, "available", None)
                 used = getattr(availability, "used", None)
                 maximum = None if available is None or used is None else available + used
-                snapshots.append(CapacitySnapshot("SERVICE_LIMIT", operation.service, limit_name, operation.region, metric, used, maximum, available))
+                scope = operation.availability_domain if scope_type.endswith("AD") else operation.region
+                snapshots.append(CapacitySnapshot("SERVICE_LIMIT", operation.service, limit_name, scope, metric, used, maximum, available))
             except Exception as exc:
                 snapshots.append(CapacitySnapshot("SERVICE_LIMIT", operation.service, limit_name, operation.region, metric, None, None, None, reason=f"Limit availability data could not be retrieved: {exc}"))
         return snapshots
@@ -58,3 +65,17 @@ class OciLimitsProvider(CapacityProvider):
             page = response.headers.get("opc-next-page") if hasattr(response, "headers") else None
             if not page:
                 return items
+
+    def _definition_by_name(self, service_name: str):
+        items = []
+        page = None
+        while True:
+            try:
+                response = self.client.list_limit_definitions(self.tenancy_compartment_id, service_name=service_name, page=page)
+            except Exception:
+                return {}
+            data = getattr(response, "data", response)
+            items.extend(data if isinstance(data, list) else [data])
+            page = response.headers.get("opc-next-page") if hasattr(response, "headers") else None
+            if not page:
+                return {getattr(item, "name", None): item for item in items if getattr(item, "name", None)}

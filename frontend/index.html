@@ -3,48 +3,99 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>OCI Capacity Preflight</title>
+  <title>Capacity Readiness Check</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <main>
-    <section class="health">
-      <h1>OCI Capacity Preflight</h1>
+    <section class="summary-panel">
+      <div id="modeBanner" class="mode-banner">
+        <strong id="modeLabel">Checking data mode...</strong>
+        <span id="modeContext">Tenancy: - | Region: - | Last refresh: - | Age: - | Status: -</span>
+      </div>
+      <h1>Capacity Readiness Check</h1>
+      <p class="positioning">Check planned infrastructure changes against live capacity, service-limit, and quota signals before deployment.</p>
       <div class="metrics">
         <div><strong id="decisionMetric">-</strong><span>Last result</span></div>
         <div><strong id="availableMetric">-</strong><span>Available</span></div>
-        <div><strong id="requestedMetric">14</strong><span>Requested</span></div>
-        <div><strong id="targetRegionMetric">-</strong><span>Target region</span></div>
-        <div><strong id="quotaRegionMetric">-</strong><span>Quota region</span></div>
+        <div><strong id="requestedMetric">-</strong><span>Requested</span></div>
+        <div><strong id="targetRegionMetric">-</strong><span>Region</span></div>
       </div>
-      <article class="risk">
-        <h2 id="serviceLabel">-</h2>
-        <p id="limitLabel">-</p>
-        <dl><dt>Tenancy</dt><dd>Connected</dd><dt>Region</dt><dd id="regionLabel">-</dd><dt>AD</dt><dd id="adLabel">-</dd><dt>Compartment</dt><dd id="compartmentLabel">Production</dd><dt>Status</dt><dd id="statusLabel">Waiting</dd></dl>
+      <article class="context">
+        <h2 id="serviceLabel">Select a service</h2>
+        <p id="operationLabel">Select an operation</p>
+        <dl>
+          <dt>Capability</dt><dd id="capabilityLabel">-</dd>
+          <dt>Scope</dt><dd id="scopeLabel">-</dd>
+          <dt>Compartment</dt><dd id="compartmentLabel">-</dd>
+          <dt>Status</dt><dd id="statusLabel">Waiting</dd>
+        </dl>
       </article>
     </section>
-    <section class="precheck">
-      <h1>Precheck A Deployment</h1>
-      <label>Service<select id="service"></select></label>
-      <label>Limit<select id="limit"></select></label>
-      <label>Resource<select id="resource"><option value="instance">Instance</option></select></label>
-      <label>Region<input id="region" value="us-ashburn-1"></label>
-      <label>Quota Region<input id="quotaRegion" value="us-ashburn-1"></label>
-      <label>Availability Domain<input id="availabilityDomain" value="<VALID_AD>"></label>
-      <label>Compartment OCID<input id="compartment" value="<COMPARTMENT_OCID>"></label>
-      <label id="requestedLabel">Requested OCPUs<input id="requested" type="number" value="14"></label>
-      <button id="run">Run Preflight</button>
+
+    <section class="workspace">
+      <section class="precheck">
+        <h1>What Are You Planning To Deploy?</h1>
+        <div class="selector-grid">
+          <label>Service<select id="service"></select></label>
+          <label>Operation<select id="operation"></select></label>
+        </div>
+        <div id="operationCapability" class="capability-card"></div>
+        <div id="dynamicForm" class="field-group"></div>
+        <button id="run">Run Preflight</button>
+        <section id="result" class="empty-state">
+          <h2>Precheck Result</h2>
+          <p>Select a supported operation and run preflight.</p>
+        </section>
+      </section>
+
       <section class="capabilities">
-        <h2>Capability Matrix</h2>
-        <div id="capabilityMessage" class="notice"></div>
+        <div class="section-header">
+          <h2>OCI Tenancy Capacity</h2>
+          <div><button id="refreshCapacity" type="button">Refresh inventory</button><div id="cacheStatus" class="cache-status">Cache status: -</div></div>
+        </div>
+        <p id="dataNotice" class="advisory" hidden></p>
+        <div class="capacity-metrics">
+          <div><strong id="servicesDiscovered">-</strong><span>Services discovered</span></div>
+          <div><strong id="limitsDiscovered">-</strong><span>Limits discovered</span></div>
+          <div><strong id="fullCount">-</strong><span>Full Preflight</span></div>
+          <div><strong id="monitorCount">-</strong><span>Monitor Only</span></div>
+          <div><strong id="discoveryCount">-</strong><span>Discovery Only</span></div>
+          <div><strong id="unsupportedCount">-</strong><span>Unsupported</span></div>
+          <div><strong id="criticalCount">-</strong><span>Critical</span></div>
+          <div><strong id="warningCount">-</strong><span>Warning</span></div>
+          <div><strong id="watchCount">-</strong><span>Watch</span></div>
+          <div><strong id="healthyCount">-</strong><span>Healthy</span></div>
+          <div><strong id="unknownCount">-</strong><span>Unknown</span></div>
+          <div><strong id="cacheAge">-</strong><span>Data age</span></div>
+          <div><strong id="cacheState">-</strong><span>Cache status</span></div>
+        </div>
+        <dl class="cache-details">
+          <dt>Last refreshed</dt><dd id="cacheRefreshed">-</dd>
+          <dt>Data age</dt><dd id="cacheAgeDetail">-</dd>
+          <dt>Status</dt><dd id="cacheStateDetail">-</dd>
+        </dl>
+        <div class="filters">
+          <label>Service<input id="filterService" placeholder="compute"></label>
+          <label>Capability<select id="filterCapability"><option value="">All</option><option>FULL_PREFLIGHT</option><option>MONITOR_ONLY</option><option>DISCOVERY_ONLY</option><option>UNSUPPORTED</option></select></label>
+          <label>Risk<select id="filterRisk"><option value="">All</option><option>EXHAUSTED</option><option>CRITICAL</option><option>WARNING</option><option>WATCH</option><option>HEALTHY</option><option>UNKNOWN</option></select></label>
+          <label>Region<input id="filterRegion" placeholder="us-ashburn-1"></label>
+          <label>AD<input id="filterAd" placeholder="Availability Domain"></label>
+          <label>Search limit name<input id="filterLimitName" placeholder="limit name"></label>
+        </div>
+        <p id="capacityRowStatus" class="row-status"></p>
         <table>
-          <thead><tr><th>Service</th><th>Limit</th><th>Scope</th><th>Available</th><th>Capability</th></tr></thead>
+          <thead><tr><th>Service</th><th>Limit / description</th><th>Scope</th><th>Region / AD</th><th>Current limit</th><th>Usage</th><th>Available</th><th>Utilization</th><th>Risk</th><th>Capability</th><th>Last refreshed</th><th>Data status</th></tr></thead>
           <tbody id="capabilityRows"></tbody>
         </table>
+        <section class="coverage-view">
+          <h2>Preflight coverage</h2>
+          <p>Operation-level preflight is offered only where a verified operation-to-limit mapping exists.</p>
+          <div id="coverageRows"></div>
+        </section>
       </section>
-      <section id="result"></section>
     </section>
   </main>
-  <script src="app.js?v=team-review-ashburn-20260915"></script>
+  <script src="app.js?v=service-labels-data-20260918"></script>
 </body>
 </html>

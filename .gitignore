@@ -23,3 +23,8 @@ venv/
 dist/
 build/
 .pytest_cache/
+
+# Runner/deployment artifacts that can contain operational identifiers or signed URLs.
+*.tgz
+runcommand-*.json
+ssh-key-*.pub

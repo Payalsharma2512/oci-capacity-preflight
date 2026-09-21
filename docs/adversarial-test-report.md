@@ -98,7 +98,7 @@ The UI has started translating common `UNKNOWN` causes into friendlier messages,
 {
   "customer_status": "UNABLE_TO_VALIDATE",
   "error_category": "PERMISSION",
-  "next_action": "Grant inspect quotas to the instance principal dynamic group."
+  "next_action": "Grant read quotas to the instance principal dynamic group."
 }
 ```
 

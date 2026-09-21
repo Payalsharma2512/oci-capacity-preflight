@@ -14,4 +14,4 @@ oci-capacity-preflight = "cli.main:main"
 
 [tool.setuptools]
 py-modules = []
-packages = ["src", "src.adapters", "src.capacity", "src.discovery", "src.limits", "src.quotas", "src.usage", "src.preflight", "src.forecasting", "src.notifications", "src.api", "cli"]
+packages = ["src", "src.adapters", "src.capacity", "src.compute", "src.discovery", "src.limits", "src.quotas", "src.usage", "src.preflight", "src.forecasting", "src.notifications", "src.api", "cli"]

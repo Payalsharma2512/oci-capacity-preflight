@@ -36,6 +36,7 @@ class Operation:
     requested_delta: dict[str, float]
     availability_domain: str | None = None
     compartment_name: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "Operation":
@@ -53,6 +54,7 @@ class Operation:
             compartment_id=payload["compartment_id"],
             compartment_name=payload.get("compartment_name"),
             requested_delta={k: float(v) for k, v in requested.items()},
+            metadata=payload.get("metadata", {}),
         )
 
 
@@ -149,6 +151,7 @@ class PreflightResult:
                 "compartment_id": self.operation.compartment_id,
                 "compartment_name": self.operation.compartment_name,
                 "requested_delta": self.operation.requested_delta,
+                "metadata": self.operation.metadata,
             },
             "effective_available_capacity": self.effective_available_capacity,
             "primary_blocking_constraint": self.primary_blocking_constraint,
@@ -164,6 +167,7 @@ class LimitCapability:
     service: str
     service_description: str | None
     limit_name: str
+    limit_description: str | None
     scope_type: str | None
     limit_value: float | None
     current_usage: float | None
@@ -172,12 +176,21 @@ class LimitCapability:
     unit: str | None = None
     reason: str | None = None
     is_eligible_for_increase: bool | None = None
+    region: str | None = None
+    availability_domain: str | None = None
+    resource_availability_supported: bool | None = None
+    quota_statements: list[str] = field(default_factory=list)
+    quota_readable: bool | None = None
+    utilization: float | None = None
+    risk_state: str | None = None
+    api_limitation: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "service": self.service,
             "service_description": self.service_description,
             "limit_name": self.limit_name,
+            "limit_description": self.limit_description,
             "scope_type": self.scope_type,
             "limit_value": self.limit_value,
             "current_usage": self.current_usage,
@@ -186,4 +199,46 @@ class LimitCapability:
             "unit": self.unit,
             "reason": self.reason,
             "is_eligible_for_increase": self.is_eligible_for_increase,
+            "region": self.region,
+            "availability_domain": self.availability_domain,
+            "resource_availability_supported": self.resource_availability_supported,
+            "quota_statements": self.quota_statements,
+            "quota_readable": self.quota_readable,
+            "utilization": self.utilization,
+            "risk_state": self.risk_state,
+            "api_limitation": self.api_limitation,
+        }
+
+
+@dataclass(frozen=True)
+class ComputeWorkloadIntent:
+    region: str
+    availability_domain: str | None
+    compartment_id: str
+    shape: str
+    instance_count: int
+    ocpus_per_instance: float | None = None
+    memory_gb_per_instance: float | None = None
+    compartment_name: str | None = None
+
+
+@dataclass(frozen=True)
+class ComputeShape:
+    name: str
+    ocpus: float | None
+    memory_gb: float | None
+    is_flex: bool
+    gpus: float | None = None
+    processor_description: str | None = None
+    raw: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "ocpus": self.ocpus,
+            "memory_gb": self.memory_gb,
+            "is_flex": self.is_flex,
+            "gpus": self.gpus,
+            "processor_description": self.processor_description,
+            "raw": self.raw,
         }

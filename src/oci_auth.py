@@ -11,6 +11,7 @@ class OciClients:
     signer: object | None
     limits_client: object
     quotas_client: object
+    compute_client: object
     tenancy_id: str
 
 
@@ -63,4 +64,5 @@ def build_oci_clients(
 
     limits_client = oci.limits.LimitsClient(config, signer=signer, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY)
     quotas_client = oci.limits.QuotasClient(quotas_config, signer=signer)
-    return OciClients(config=config, quotas_config=quotas_config, signer=signer, limits_client=limits_client, quotas_client=quotas_client, tenancy_id=tenancy_id)
+    compute_client = oci.core.ComputeClient(config, signer=signer, retry_strategy=oci.retry.DEFAULT_RETRY_STRATEGY)
+    return OciClients(config=config, quotas_config=quotas_config, signer=signer, limits_client=limits_client, quotas_client=quotas_client, compute_client=compute_client, tenancy_id=tenancy_id)

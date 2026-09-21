@@ -224,6 +224,29 @@ class CustomerPressureTests(unittest.TestCase):
         result = CapacityDecisionEngine([SyntheticCustomerProvider(incomplete)]).preflight(op(amount=1))
         self.assertEqual(result.decision, Decision.UNKNOWN)
 
+    def test_26_block_volume_storage_request_passes_when_count_and_gb_fit(self):
+        snapshots = [
+            CapacitySnapshot("SERVICE_LIMIT", "block-storage", "volume-count", "us-ashburn-1/AD-1", "volume_count", 0, 100, 100),
+            CapacitySnapshot("SERVICE_LIMIT", "block-storage", "total-storage-gb", "us-ashburn-1/AD-1", "storage_gb", 100, 20000, 19900),
+        ]
+        operation = Operation("block-storage", "volume", "us-ashburn-1", "compartment-dev", {"volume_count": 5, "storage_gb": 10240}, "AD-1", "compartment-dev")
+
+        result = CapacityDecisionEngine([SyntheticCustomerProvider(snapshots)]).preflight(operation)
+
+        self.assertEqual(result.decision, Decision.PASS)
+
+    def test_27_block_volume_storage_request_blocks_when_gb_exceeds(self):
+        snapshots = [
+            CapacitySnapshot("SERVICE_LIMIT", "block-storage", "volume-count", "us-ashburn-1/AD-1", "volume_count", 0, 100, 100),
+            CapacitySnapshot("SERVICE_LIMIT", "block-storage", "total-storage-gb", "us-ashburn-1/AD-1", "storage_gb", 100, 10000, 9900),
+        ]
+        operation = Operation("block-storage", "volume", "us-ashburn-1", "compartment-dev", {"volume_count": 5, "storage_gb": 10240}, "AD-1", "compartment-dev")
+
+        result = CapacityDecisionEngine([SyntheticCustomerProvider(snapshots)]).preflight(operation)
+
+        self.assertEqual(result.decision, Decision.BLOCK)
+        self.assertEqual(result.primary_blocking_constraint, "SERVICE_LIMIT")
+
 
 if __name__ == "__main__":
     unittest.main()
